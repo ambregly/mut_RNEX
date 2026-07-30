@@ -30,6 +30,9 @@ def parse_args():
                    help="Dossier racine contenant les sous-dossiers RNA et EX.")
     p.add_argument("--out", type=Path, default=config.OUTPUT_DIR,
                    help="Dossier de sortie des figures.")
+    p.add_argument("--subdir", default=config.SUBDIR,
+                   help="Sous-dossier contenant les .tsv dans chaque dataset "
+                        "(défaut : %(default)r ; '' si fichiers à la racine).")
     return p.parse_args()
 
 
@@ -43,7 +46,7 @@ def main():
     # Chargement des deux dossiers
     loaded = {}
     for label, folder_name in config.FOLDERS.items():
-        loaded[label] = dl.load_folder(base, folder_name)
+        loaded[label] = dl.load_folder(base, folder_name, subdir=args.subdir)
 
     # Figures par dossier
     for label in config.FOLDERS:

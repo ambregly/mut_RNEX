@@ -167,9 +167,13 @@ def load_table(path, category: str) -> pd.DataFrame | None:
     return out
 
 
-def load_folder(base_dir, folder_name: str) -> dict[str, pd.DataFrame]:
+def load_folder(base_dir, folder_name: str, subdir: str = None) -> dict[str, pd.DataFrame]:
     """Charge les fichiers TP/FP/FN/TN d'un dossier. Clé = catégorie."""
+    if subdir is None:
+        subdir = config.SUBDIR
     folder = base_dir / folder_name
+    if subdir:
+        folder = folder / subdir
     print(f"[+] Chargement {folder_name} ({folder})")
     data: dict[str, pd.DataFrame] = {}
     for category, filename in config.FILES.items():
