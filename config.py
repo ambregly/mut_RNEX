@@ -13,7 +13,7 @@ from pathlib import Path
 # Dossier racine contenant les deux sous-dossiers RNA et EX.
 BASE_DIR = Path(
     "/data/nas/projects/kmer-collections/mutations/AML-mutations/"
-    "vizome/LAST-LAST_benoit"
+    "vizome/LAST_LAST_benoit"
 )
 
 # Nom des deux sous-dossiers. Clé = étiquette courte utilisée dans les figures.
