@@ -22,10 +22,10 @@ FOLDERS = {
     "EX": "output_vcfmin4_EX430_a6m3_postdep",
 }
 
-# Sous-dossier contenant les .tsv à l'intérieur de chaque dossier de dataset
-# (ex : .../output_vcfmin4_RNA430_a6m3_postdep/04_vaf_extract/false-neg.tsv).
+# Sous-dossier (éventuellement imbriqué) contenant les .tsv dans chaque dataset
+# (ex : .../output_vcfmin4_RNA430_a6m3_postdep/10_stats/04_vaf_extract/false-neg.tsv).
 # Mettre "" (chaîne vide) si les fichiers sont directement dans le dossier.
-SUBDIR = "04_vaf_extract"
+SUBDIR = "10_stats/04_vaf_extract"
 
 # Dossier de sortie des figures (créé s'il n'existe pas).
 OUTPUT_DIR = Path("figures")
