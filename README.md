@@ -11,7 +11,7 @@ Deux sous-dossiers dans le dossier racine :
 | Étiquette | Dossier                              |
 |-----------|--------------------------------------|
 | RNA       | `output_vcfmin4_RNA430_a6m3_postdep` |
-| EX        | `outpu_vcfmin4_EX430_a6m3_postdep`   |
+| EX        | `output_vcfmin4_EX430_a6m3_postdep`  |
 
 Chacun contient les fichiers `.tsv` :
 

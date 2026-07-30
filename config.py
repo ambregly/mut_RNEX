@@ -16,11 +16,10 @@ BASE_DIR = Path(
     "vizome/LAST-LAST_benoit"
 )
 
-# Nom des deux sous-dossiers (attention : le dossier EX a un "outpu" sans "t",
-# tel que fourni). Clé = étiquette courte utilisée dans les figures.
+# Nom des deux sous-dossiers. Clé = étiquette courte utilisée dans les figures.
 FOLDERS = {
     "RNA": "output_vcfmin4_RNA430_a6m3_postdep",
-    "EX": "outpu_vcfmin4_EX430_a6m3_postdep",
+    "EX": "output_vcfmin4_EX430_a6m3_postdep",
 }
 
 # Sous-dossier contenant les .tsv à l'intérieur de chaque dossier de dataset
