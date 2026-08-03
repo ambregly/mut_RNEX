@@ -236,61 +236,86 @@ def fig4a_driver_corplot(data, out_dir, label: str) -> None:
     _save(fig, out_dir, "fig4a_driver_scatter.png")
 
 
+def _gene_vaf_matrix(df: pd.DataFrame, vaf_col: str, genes: list) -> pd.DataFrame:
+    """Matrice sample × gène de VAF (moyenne des variants du gène par sample)."""
+    if df is None or df.empty:
+        return pd.DataFrame(index=[], columns=genes, dtype=float)
+    sub = df[df["gene"].isin(genes)].copy()
+    sub[vaf_col] = pd.to_numeric(sub[vaf_col], errors="coerce")
+    mat = sub.groupby(["sample", "gene"])[vaf_col].mean().unstack("gene")
+    return mat.reindex(columns=genes)
+
+
 def fig4c_driver_corplot(data, out_dir, label: str) -> None:
-    """Corplot (style R corrplot) : corrélation rdeer vs vizome (VAF, TP) par gène.
+    """Corplot (style R corrplot) : matrice gène × gène des corrélations de VAF.
 
-    Une valeur de r (Pearson) par gène driver, rendue par un cercle dont la
-    couleur ET la taille encodent r (bleu = +1, rouge = -1), échelle -1..1.
+    Triangle supérieur = corrélations calculées sur les VAF rdeer.
+    Triangle inférieur = corrélations calculées sur les VAF vizome.
+    Chaque cellule (gène i, gène j) = corrélation de Pearson entre les VAF des
+    deux gènes à travers les samples. Taille ET couleur du cercle = r (-1..1).
     """
-    print("  fig4c : corplot corrélation rdeer vs vizome par gène driver (TP)")
-    if "TP" not in data or data["TP"].empty:
-        print("    [!] pas de TP, figure ignorée")
-        return
-    tp = _filter_drivers(data["TP"])
-    genes = [g for g in config.DRIVER_GENES if (tp["gene"] == g).any()]
-    if not genes:
-        print("    [!] aucun gène driver présent dans les TP, figure ignorée")
+    print("  fig4c : corplot gène × gène (rdeer haut / vizome bas)")
+    rdeer = dl.rdeer_detections(data)   # TP ∪ FP
+    vizome = dl.vizome_truth(data)      # TP ∪ FN
+
+    # Gènes drivers présents dans au moins une des deux vues
+    present = set(rdeer.get("gene", pd.Series(dtype=str))) | set(
+        vizome.get("gene", pd.Series(dtype=str))
+    )
+    genes = [g for g in config.DRIVER_GENES if g in present]
+    if len(genes) < 2:
+        print("    [!] moins de 2 gènes drivers présents, figure ignorée")
         return
 
-    rows = []
-    for gene in genes:
-        sub = tp[tp["gene"] == gene]
-        x = sub["rdeer_VAF"].to_numpy(dtype=float)
-        y = sub["vizome_VAF"].to_numpy(dtype=float)
-        r = _pearson(x, y)
-        n = int((np.isfinite(x) & np.isfinite(y)).sum())
-        rows.append((gene, r, n))
+    mat_r = _gene_vaf_matrix(rdeer, "rdeer_VAF", genes)
+    mat_v = _gene_vaf_matrix(vizome, "vizome_VAF", genes)
+    # Matrices de corrélation gène × gène (Pearson, paires de samples communes)
+    corr_r = mat_r.corr(min_periods=2).reindex(index=genes, columns=genes)
+    corr_v = mat_v.corr(min_periods=2).reindex(index=genes, columns=genes)
 
-    fig, ax = plt.subplots(figsize=(4.2, 0.5 * len(rows) + 1.5))
+    n = len(genes)
     cmap = plt.get_cmap("RdBu")  # -1 -> rouge, +1 -> bleu
-    max_area = 1600  # aire max des cercles (points^2)
-    ys = np.arange(len(rows))[::-1]  # premier gène en haut
-    for (gene, r, n), yv in zip(rows, ys):
-        if not np.isfinite(r):
-            # r indéfini (n<2 ou variance nulle) : anneau gris
-            ax.scatter(0, yv, s=200, facecolor="none", edgecolor="grey",
-                       linewidth=1.0)
-            ax.text(0.45, yv, "n/a", va="center", fontsize=7, color="grey")
-            continue
-        area = max(60, abs(r) * max_area)
-        color = cmap((r + 1) / 2)
-        ax.scatter(0, yv, s=area, color=color, edgecolor="grey", linewidth=0.4)
-        ax.text(0.45, yv, f"{r:.2f}\n(n={n})", va="center", fontsize=7)
+    max_area = (min(520 / n, 60)) ** 2  # aire max adaptée à la densité
 
-    ax.set_yticks(ys)
-    ax.set_yticklabels([g for g, _, _ in rows], color="#c0392b", fontsize=10)
-    ax.set_xticks([])
-    ax.set_xlim(-0.6, 1.0)
-    ax.set_ylim(-0.6, len(rows) - 0.4)
-    for spine in ("top", "right", "bottom"):
-        ax.spines[spine].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.set_title(f"{label} — corrélation VAF\nrdeer vs vizome (TP) par gène",
-                 fontsize=11)
+    fig, ax = plt.subplots(figsize=(0.6 * n + 2.5, 0.6 * n + 2.5))
+    for i in range(n):          # ligne (y, 0 en haut)
+        for j in range(n):      # colonne (x)
+            if i == j:
+                ax.scatter(j, i, s=max_area * 0.15, color="#333333",
+                           marker="s")
+                continue
+            if j > i:           # triangle supérieur -> rdeer
+                r = corr_r.iloc[i, j]
+            else:               # triangle inférieur -> vizome
+                r = corr_v.iloc[i, j]
+            if not np.isfinite(r):
+                continue
+            area = max(30, abs(r) * max_area)
+            ax.scatter(j, i, s=area, color=cmap((r + 1) / 2),
+                       edgecolor="grey", linewidth=0.4)
+
+    # Grille façon corrplot
+    ax.set_xticks(np.arange(n))
+    ax.set_xticklabels(genes, rotation=90, color="#c0392b", fontsize=9)
+    ax.set_yticks(np.arange(n))
+    ax.set_yticklabels(genes, color="#c0392b", fontsize=9)
+    ax.xaxis.set_ticks_position("top")
+    ax.set_xticks(np.arange(-0.5, n, 1), minor=True)
+    ax.set_yticks(np.arange(-0.5, n, 1), minor=True)
+    ax.grid(which="minor", color="#dddddd", linewidth=0.6)
+    ax.tick_params(which="minor", length=0)
+    ax.set_xlim(-0.5, n - 0.5)
+    ax.set_ylim(n - 0.5, -0.5)  # 0 en haut
+    ax.set_aspect("equal")
+    ax.set_title(
+        f"{label} — corrélation VAF gène × gène\n"
+        f"triangle sup. = rdeer   ·   triangle inf. = vizome",
+        fontsize=11, pad=30,
+    )
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
     sm.set_array([])
-    cbar = fig.colorbar(sm, ax=ax, fraction=0.06, pad=0.08)
+    cbar = fig.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
     cbar.set_label("Pearson r")
     fig.tight_layout()
     _save(fig, out_dir, "fig4c_driver_corplot.png")
