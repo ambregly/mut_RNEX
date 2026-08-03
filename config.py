@@ -33,6 +33,10 @@ OUTPUT_DIR = Path("figures")
 # --------------------------------------------------------------------------- #
 # Fichiers attendus dans chaque dossier
 # --------------------------------------------------------------------------- #
+# Rapport de métriques par gène (précision / recall) pour le score F1.
+VAF_REPORT_SUBDIR = "10_stats/03_vaf_report"
+VAF_REPORT_FILE = "vaf_report.tsv"
+
 # lose-ref0.tsv (TP+FP) est redondant avec true-pos + false-pos -> non utilisé.
 FILES = {
     "TP": "true-pos.tsv",   # présent dans rdeer ET vizome
@@ -44,12 +48,15 @@ FILES = {
 # --------------------------------------------------------------------------- #
 # Gènes drivers (matching EXACT sur la colonne "gene")
 # --------------------------------------------------------------------------- #
-# NB : matching exact demandé. Si le vrai symbole dans les fichiers est
-# "DNMT3A" (et non "DNMT3"), remplace simplement l'entrée ci-dessous.
 DRIVER_GENES = [
     "DNMT3", "TP53", "TET2", "RUNX1", "SRSF2", "ASXL1",
     "FLT3", "NPM1", "IDH2", "IDH1", "NRAS", "PTPN11",
 ]
+
+# Mode de correspondance entre DRIVER_GENES et la colonne "gene" des fichiers :
+#   "prefix" : "DNMT3" capte DNMT3A, DNMT3B...  (les noms réels sont conservés)
+#   "exact"  : la colonne "gene" doit égaler exactement l'entrée
+GENE_MATCH = "prefix"
 
 # --------------------------------------------------------------------------- #
 # Couleurs

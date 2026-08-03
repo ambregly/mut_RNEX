@@ -185,6 +185,57 @@ def load_folder(base_dir, folder_name: str, subdir: str = None) -> dict[str, pd.
 
 
 # --------------------------------------------------------------------------- #
+# Rapport de métriques par gène (précision / recall -> F1)
+# --------------------------------------------------------------------------- #
+_TOTAL_ROWS = {"", "total", "all", "genome", "overall", "sum", "-", "."}
+
+
+def load_vaf_report(base_dir, folder_name: str) -> pd.DataFrame | None:
+    """Charge vaf_report.tsv et calcule le F1 par gène.
+
+    En-tête attendu :
+        gene true+ false+ false- true- Precision Recall specificity
+        rdee_no_ref vizo_no_ref rdee_vizo_no_ref
+    Renvoie un DataFrame [gene, precision, recall, f1] (fractions 0-1).
+    """
+    path = base_dir / folder_name / config.VAF_REPORT_SUBDIR / config.VAF_REPORT_FILE
+    if not path.exists():
+        print(f"  [!] vaf_report absent : {path}")
+        return None
+
+    df = pd.read_csv(path, sep="\t", dtype=str)
+    if df.shape[1] == 1:
+        df = pd.read_csv(path, sep=r"\s+", engine="python", dtype=str)
+
+    norm = {str(c).strip().lower(): c for c in df.columns}
+
+    def find(pred):
+        for low, orig in norm.items():
+            if pred(low):
+                return orig
+        return None
+
+    c_gene = find(lambda c: c == "gene") or find(lambda c: "gene" in c)
+    c_prec = find(lambda c: c.startswith("prec"))
+    c_rec = find(lambda c: c.startswith("rec"))
+    if not (c_gene and c_prec and c_rec):
+        print(f"  [!] colonnes precision/recall introuvables dans {path.name}")
+        return None
+
+    out = pd.DataFrame()
+    out["gene"] = df[c_gene].astype(str).str.strip()
+    out["precision"] = df[c_prec].map(_parse_vaf_column)
+    out["recall"] = df[c_rec].map(_parse_vaf_column)
+    # Retire les lignes de total / agrégat éventuelles
+    out = out[~out["gene"].str.lower().isin(_TOTAL_ROWS)]
+
+    denom = out["precision"] + out["recall"]
+    out["f1"] = np.where(denom > 0, 2 * out["precision"] * out["recall"] / denom,
+                         np.nan)
+    return out.reset_index(drop=True)
+
+
+# --------------------------------------------------------------------------- #
 # Helpers d'ensembles
 # --------------------------------------------------------------------------- #
 def rdeer_detections(data: dict[str, pd.DataFrame]) -> pd.DataFrame:

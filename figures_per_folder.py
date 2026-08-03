@@ -189,11 +189,33 @@ def fig3_box_violin(data, out_dir, label: str) -> None:
 # --------------------------------------------------------------------------- #
 # fig4 : gènes drivers — corplot VAF par gène + heatmap TP/FP/FN
 # --------------------------------------------------------------------------- #
+def driver_of(gene: str):
+    """Renvoie l'entrée de DRIVER_GENES correspondant à `gene`, sinon None.
+
+    Selon config.GENE_MATCH : "prefix" (DNMT3 capte DNMT3A...) ou "exact".
+    """
+    g = str(gene)
+    for d in config.DRIVER_GENES:
+        if g == d or (config.GENE_MATCH == "prefix" and g.startswith(d)):
+            return d
+    return None
+
+
 def _filter_drivers(df: pd.DataFrame) -> pd.DataFrame:
-    """Matching EXACT sur la colonne gene."""
+    """Garde les lignes dont le gène correspond à un gène driver."""
     if df is None or df.empty:
         return pd.DataFrame(columns=df.columns if df is not None else None)
-    return df[df["gene"].isin(config.DRIVER_GENES)]
+    mask = df["gene"].map(lambda g: driver_of(g) is not None)
+    return df[mask]
+
+
+def ordered_driver_genes(genes) -> list:
+    """Noms de gènes réels présents, ordonnés selon DRIVER_GENES."""
+    uniq = {str(g) for g in genes if driver_of(g) is not None}
+    return sorted(
+        uniq,
+        key=lambda g: (config.DRIVER_GENES.index(driver_of(g)), g),
+    )
 
 
 def fig4a_driver_corplot(data, out_dir, label: str) -> None:
@@ -202,7 +224,7 @@ def fig4a_driver_corplot(data, out_dir, label: str) -> None:
         print("    [!] pas de TP, figure ignorée")
         return
     tp = _filter_drivers(data["TP"])
-    genes = [g for g in config.DRIVER_GENES if (tp["gene"] == g).any()]
+    genes = ordered_driver_genes(tp["gene"])
     if not genes:
         print("    [!] aucun gène driver présent dans les TP, figure ignorée")
         return
@@ -258,11 +280,11 @@ def fig4c_driver_corplot(data, out_dir, label: str) -> None:
     rdeer = dl.rdeer_detections(data)   # TP ∪ FP
     vizome = dl.vizome_truth(data)      # TP ∪ FN
 
-    # Gènes drivers présents dans au moins une des deux vues
+    # Gènes drivers présents dans au moins une des deux vues (noms réels)
     present = set(rdeer.get("gene", pd.Series(dtype=str))) | set(
         vizome.get("gene", pd.Series(dtype=str))
     )
-    genes = [g for g in config.DRIVER_GENES if g in present]
+    genes = ordered_driver_genes(present)
     if len(genes) < 2:
         print("    [!] moins de 2 gènes drivers présents, figure ignorée")
         return

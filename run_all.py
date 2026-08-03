@@ -74,6 +74,20 @@ def main():
     else:
         print("\n[!] Comparaison EX/RNA ignorée (un des deux dossiers manque).")
 
+    # Histogramme F1 (depuis vaf_report.tsv) — indépendant des .tsv ci-dessus
+    print("\n=== Histogramme F1 (vaf_report) ===")
+    reports = {}
+    for label, folder_name in config.FOLDERS.items():
+        reports[label] = dl.load_vaf_report(base, folder_name)
+    if any(r is not None for r in reports.values()):
+        try:
+            cmp.fig9_f1_histogram(reports, out / "comparison")
+        except Exception:
+            print("[ERREUR] figure F1 :")
+            traceback.print_exc()
+    else:
+        print("[!] Aucun vaf_report chargé, figure F1 ignorée.")
+
     print("\nTerminé.")
 
 

@@ -47,13 +47,15 @@ En-tête : `gene  mutation  sample  rdeer_AF  rdeer_VAF  vizome_AF  vizome_VAF`
 6. `fig6_venn3_gene_mutation` — Venn EX / RNA / vizome (variants uniques, sans sample).
 7. `fig7_vaf_ex_vs_rna` — VAF EX vs RNA, taille/couleur du point = VAF vizome.
 8. `fig8_driver_heatmap_ex_rna` — variants drivers × samples, validation TP par EX & RNA / EX seul / RNA seul.
+9. `fig9_f1_histogram` — distribution du score F1 par gène (RNA vs EX), calculé depuis `10_stats/03_vaf_report/vaf_report.tsv` (`F1 = 2·P·R/(P+R)`).
 
 ## Gènes drivers
 
 `DNMT3, TP53, TET2, RUNX1, SRSF2, ASXL1, FLT3, NPM1, IDH2, IDH1, NRAS, PTPN11`
 
-Matching **exact** sur la colonne `gene`. Si le symbole réel est `DNMT3A`,
-modifie la liste `DRIVER_GENES` dans `config.py`.
+Matching par **préfixe** par défaut (`config.GENE_MATCH = "prefix"`) : `DNMT3`
+capte `DNMT3A`, `DNMT3B`… et les noms réels sont conservés dans les figures.
+Mettre `GENE_MATCH = "exact"` dans `config.py` pour une correspondance stricte.
 
 ## Utilisation
 

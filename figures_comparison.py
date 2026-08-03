@@ -4,6 +4,7 @@ fig5 : Venn à 3 listes (clé gene_mutation_sample) : EX, RNA, vizome
 fig6 : Venn à 3 listes (clé gene_mutation, sans les samples)
 fig7 : scatter VAF EX vs RNA, taille du point = VAF vizome
 fig8 : heatmap gènes drivers — validation TP par EX & RNA / EX seul / RNA seul
+fig9 : histogramme du score F1 par gène (RNA & EX), depuis vaf_report.tsv
 """
 
 from __future__ import annotations
@@ -163,6 +164,44 @@ def fig8_driver_heatmap_ex_rna(data_ex, data_rna, out_dir):
                 ("EX & RNA", config.COLORS["EX_and_RNA"])],
         vmax=3,
     )
+
+
+# --------------------------------------------------------------------------- #
+# fig9 : histogramme du score F1 par gène (RNA & EX)
+# --------------------------------------------------------------------------- #
+def fig9_f1_histogram(reports: dict, out_dir):
+    """Histogramme (distribution) du F1 par gène, RNA et EX superposés.
+
+    reports : {label: DataFrame[gene, precision, recall, f1]}.
+    """
+    print("  fig9 : histogramme du score F1 (RNA & EX)")
+    series = {}
+    for label, rep in reports.items():
+        if rep is None or rep.empty:
+            continue
+        f1 = rep["f1"].to_numpy(dtype=float)
+        f1 = f1[np.isfinite(f1)]
+        if f1.size:
+            series[label] = f1
+    if not series:
+        print("    [!] aucun F1 exploitable, figure ignorée")
+        return
+
+    colors = {"RNA": config.COLORS["rdeer"], "EX": config.COLORS["vizome"]}
+    bins = np.linspace(0, 1, 21)
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+    for label, f1 in series.items():
+        ax.hist(f1, bins=bins, alpha=0.55,
+                color=colors.get(label, None), edgecolor="white",
+                label=f"{label} (n={f1.size} gènes, F1 médian={np.median(f1):.2f})")
+        ax.axvline(np.median(f1), color=colors.get(label, "grey"),
+                   ls="--", lw=1.2)
+    ax.set_xlabel("Score F1 par gène  (2·P·R / (P+R))")
+    ax.set_ylabel("Nombre de gènes")
+    ax.set_xlim(0, 1)
+    ax.set_title("Distribution du score F1 par gène — RNA vs EX")
+    ax.legend()
+    _save(fig, out_dir, "fig9_f1_histogram.png")
 
 
 # --------------------------------------------------------------------------- #
