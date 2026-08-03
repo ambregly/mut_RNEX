@@ -197,7 +197,7 @@ def _filter_drivers(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fig4a_driver_corplot(data, out_dir, label: str) -> None:
-    print("  fig4a : corplot VAF par gène driver (TP)")
+    print("  fig4a : nuage VAF rdeer vs vizome par gène driver (TP)")
     if "TP" not in data or data["TP"].empty:
         print("    [!] pas de TP, figure ignorée")
         return
@@ -233,7 +233,67 @@ def fig4a_driver_corplot(data, out_dir, label: str) -> None:
     fig.suptitle(f"{label} — VAF rdeer vs vizome par gène driver (TP)",
                  fontsize=13)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
-    _save(fig, out_dir, "fig4a_driver_corplot.png")
+    _save(fig, out_dir, "fig4a_driver_scatter.png")
+
+
+def fig4c_driver_corplot(data, out_dir, label: str) -> None:
+    """Corplot (style R corrplot) : corrélation rdeer vs vizome (VAF, TP) par gène.
+
+    Une valeur de r (Pearson) par gène driver, rendue par un cercle dont la
+    couleur ET la taille encodent r (bleu = +1, rouge = -1), échelle -1..1.
+    """
+    print("  fig4c : corplot corrélation rdeer vs vizome par gène driver (TP)")
+    if "TP" not in data or data["TP"].empty:
+        print("    [!] pas de TP, figure ignorée")
+        return
+    tp = _filter_drivers(data["TP"])
+    genes = [g for g in config.DRIVER_GENES if (tp["gene"] == g).any()]
+    if not genes:
+        print("    [!] aucun gène driver présent dans les TP, figure ignorée")
+        return
+
+    rows = []
+    for gene in genes:
+        sub = tp[tp["gene"] == gene]
+        x = sub["rdeer_VAF"].to_numpy(dtype=float)
+        y = sub["vizome_VAF"].to_numpy(dtype=float)
+        r = _pearson(x, y)
+        n = int((np.isfinite(x) & np.isfinite(y)).sum())
+        rows.append((gene, r, n))
+
+    fig, ax = plt.subplots(figsize=(4.2, 0.5 * len(rows) + 1.5))
+    cmap = plt.get_cmap("RdBu")  # -1 -> rouge, +1 -> bleu
+    max_area = 1600  # aire max des cercles (points^2)
+    ys = np.arange(len(rows))[::-1]  # premier gène en haut
+    for (gene, r, n), yv in zip(rows, ys):
+        if not np.isfinite(r):
+            # r indéfini (n<2 ou variance nulle) : anneau gris
+            ax.scatter(0, yv, s=200, facecolor="none", edgecolor="grey",
+                       linewidth=1.0)
+            ax.text(0.45, yv, "n/a", va="center", fontsize=7, color="grey")
+            continue
+        area = max(60, abs(r) * max_area)
+        color = cmap((r + 1) / 2)
+        ax.scatter(0, yv, s=area, color=color, edgecolor="grey", linewidth=0.4)
+        ax.text(0.45, yv, f"{r:.2f}\n(n={n})", va="center", fontsize=7)
+
+    ax.set_yticks(ys)
+    ax.set_yticklabels([g for g, _, _ in rows], color="#c0392b", fontsize=10)
+    ax.set_xticks([])
+    ax.set_xlim(-0.6, 1.0)
+    ax.set_ylim(-0.6, len(rows) - 0.4)
+    for spine in ("top", "right", "bottom"):
+        ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.set_title(f"{label} — corrélation VAF\nrdeer vs vizome (TP) par gène",
+                 fontsize=11)
+
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=-1, vmax=1))
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, fraction=0.06, pad=0.08)
+    cbar.set_label("Pearson r")
+    fig.tight_layout()
+    _save(fig, out_dir, "fig4c_driver_corplot.png")
 
 
 # Encodage catégoriel de la heatmap TP/FP/FN
@@ -312,4 +372,5 @@ def run_folder(data, out_dir, label: str) -> None:
     fig2_correlation(data, out_dir, label)
     fig3_box_violin(data, out_dir, label)
     fig4a_driver_corplot(data, out_dir, label)
+    fig4c_driver_corplot(data, out_dir, label)
     fig4b_driver_heatmap(data, out_dir, label)
