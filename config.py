@@ -76,5 +76,8 @@ COLORS = {
     "EX_and_RNA": "#2ca02c" # vert
 }
 
-# Résolution des images
+# Format de sortie des figures : "pdf", "png" ou "both".
+FIG_FORMAT = "pdf"
+
+# Résolution des images matricielles (sans effet sur le PDF, vectoriel).
 DPI = 150

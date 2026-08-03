@@ -66,10 +66,15 @@ pip install -r requirements.txt
 python run_all.py
 
 # ou en précisant le dossier racine et la sortie
-python run_all.py --base-dir /data/nas/.../LAST-LAST_benoit --out figures
+python run_all.py --base-dir /data/nas/.../LAST_LAST_benoit --out figures
+
+# format de sortie : pdf (défaut), png ou both
+python run_all.py --out figures --format pdf
 ```
 
-Le chemin par défaut est défini dans `config.py` (`BASE_DIR`).
+Le chemin par défaut est défini dans `config.py` (`BASE_DIR`). Les figures sont
+exportées en **PDF** par défaut (`config.FIG_FORMAT`) ; `--format png` ou
+`--format both` pour changer.
 
 ## Structure du code
 

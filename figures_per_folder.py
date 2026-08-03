@@ -8,6 +8,8 @@ fig4 : gènes drivers -> corplot VAF par gène + heatmap variants × samples (TP
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -26,12 +28,21 @@ import data_loading as dl
 # --------------------------------------------------------------------------- #
 # Utilitaires
 # --------------------------------------------------------------------------- #
+_FORMATS = {"pdf": ["pdf"], "png": ["png"], "both": ["png", "pdf"]}
+
+
 def _save(fig, out_dir, name: str) -> None:
+    """Enregistre la figure selon config.FIG_FORMAT (pdf / png / both).
+
+    `name` peut porter n'importe quelle extension : seul le radical est repris.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / name
-    fig.savefig(path, dpi=config.DPI, bbox_inches="tight")
+    stem = Path(name).stem
+    for ext in _FORMATS.get(config.FIG_FORMAT, ["pdf"]):
+        path = out_dir / f"{stem}.{ext}"
+        fig.savefig(path, dpi=config.DPI, bbox_inches="tight")
+        print(f"    -> {path}")
     plt.close(fig)
-    print(f"    -> {path}")
 
 
 def _pearson(x: np.ndarray, y: np.ndarray) -> float:

@@ -33,14 +33,19 @@ def parse_args():
     p.add_argument("--subdir", default=config.SUBDIR,
                    help="Sous-dossier contenant les .tsv dans chaque dataset "
                         "(défaut : %(default)r ; '' si fichiers à la racine).")
+    p.add_argument("--format", choices=["pdf", "png", "both"],
+                   default=config.FIG_FORMAT,
+                   help="Format de sortie des figures (défaut : %(default)s).")
     return p.parse_args()
 
 
 def main():
     args = parse_args()
+    config.FIG_FORMAT = args.format  # applique le format choisi à _save()
     base = args.base_dir
     out = args.out
     print(f"Base : {base}")
+    print(f"Format figures : {config.FIG_FORMAT}")
     print(f"Sortie : {out.resolve()}\n")
 
     # Chargement des deux dossiers
