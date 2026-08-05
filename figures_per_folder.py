@@ -123,22 +123,22 @@ def fig2_correlation(data, out_dir, label: str) -> None:
     _save(fig, out_dir, "fig2_corr_vaf.png")
 
     # (b) ALT (une couleur) et REF (une autre couleur)
+    # Pas de droite y=x ni d'axes forcés à la même échelle : on laisse les axes
+    # s'auto-échelonner pour ne pas écraser un éventuel facteur systématique
+    # (ex. ×2) entre rdeer et vizome. La pente de la régression donne ce facteur.
     fig, ax = plt.subplots(figsize=(6, 6))
-    max_val = 1.0
     for comp, color in [("ALT", config.COLORS["ALT"]), ("REF", config.COLORS["REF"])]:
         xc = tp[f"rdeer_{comp}"].to_numpy(dtype=float)
         yc = tp[f"vizome_{comp}"].to_numpy(dtype=float)
         rc = _pearson(xc, yc)
+        mask = np.isfinite(xc) & np.isfinite(yc)
+        slope = (np.polyfit(xc[mask], yc[mask], 1)[0] if mask.sum() >= 2
+                 else np.nan)
         ax.scatter(xc, yc, s=18, alpha=0.5, color=color, edgecolor="none",
-                   label=f"{comp} (r={rc:.3f})")
+                   label=f"{comp} (r={rc:.3f}, pente={slope:.2f})")
         _regline(ax, xc, yc, color)
-        finite = np.concatenate([xc[np.isfinite(xc)], yc[np.isfinite(yc)]])
-        if finite.size:
-            max_val = max(max_val, float(np.nanmax(finite)))
-    lim = [0, max_val * 1.05]
-    ax.plot(lim, lim, color="grey", lw=0.8, ls=":", label="y = x")
-    ax.set_xlim(lim)
-    ax.set_ylim(lim)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
     ax.set_xlabel("Comptage rdeer")
     ax.set_ylabel("Comptage vizome")
     ax.set_title(f"{label} — ALT & REF rdeer vs vizome (TP)")
