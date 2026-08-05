@@ -36,7 +36,7 @@ En-tête : `gene  mutation  sample  rdeer_AF  rdeer_VAF  vizome_AF  vizome_VAF`
 
 1. `fig1_venn_*` — Venn rdeer ∩ vizome (clés `gene_mutation_sample` et `gene_mutation`).
 2. `fig2_corr_vaf` / `fig2_corr_alt_ref` — corrélation rdeer vs vizome (VAF ; ALT & REF), droite de régression.
-3. `fig3_box_vaf` / `fig3_violin_vaf` — VAF des TP & FP (rdeer / vizome).
+3. `fig3_box_vaf` / `fig3_violin_vaf` — VAF par catégorie : TP (rdeer + vizome), FP (rdeer seul), FN (vizome seul).
 4. `fig4a_driver_scatter` — nuage VAF rdeer vs vizome par gène driver (TP).
    `fig4c_driver_corplot` — corplot (style R corrplot) : matrice gène × gène des corrélations de VAF (triangle sup. = rdeer, triangle inf. = vizome), cercle taille & couleur = r, échelle −1..1.
    `fig4b_driver_heatmap` — variants drivers × samples, couleur TP / FP / FN.

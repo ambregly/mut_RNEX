@@ -147,16 +147,27 @@ def fig2_correlation(data, out_dir, label: str) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# fig3 : box + violin de la VAF des TP & FP (rdeer / vizome)
+# fig3 : box + violin de la VAF des TP, FP (rdeer / vizome) et FN (vizome seul)
 # --------------------------------------------------------------------------- #
+# Outils tracés par catégorie :
+#   TP : rdeer + vizome (variant vu par les deux)
+#   FP : rdeer seul     (pas de VAF vizome)
+#   FN : vizome seul     (variant vu seulement par vizome)
+_CATEGORY_TOOLS = {
+    "TP": ("rdeer", "vizome"),
+    "FP": ("rdeer",),
+    "FN": ("vizome",),
+}
+
+
 def _long_vaf(data) -> pd.DataFrame:
-    """Format long : category (TP/FP), tool (rdeer/vizome), VAF (%)."""
+    """Format long : category (TP/FP/FN), tool (rdeer/vizome), VAF (%)."""
     rows = []
-    for cat in ("TP", "FP"):
+    for cat, tools in _CATEGORY_TOOLS.items():
         if cat not in data:
             continue
         df = data[cat]
-        for tool in ("rdeer", "vizome"):
+        for tool in tools:
             col = f"{tool}_VAF"
             sub = df[["category"]].copy()
             sub["tool"] = tool
@@ -169,30 +180,32 @@ def _long_vaf(data) -> pd.DataFrame:
 
 
 def fig3_box_violin(data, out_dir, label: str) -> None:
-    print("  fig3 : box / violin VAF (TP & FP)")
+    print("  fig3 : box / violin VAF (TP, FP, FN)")
     long = _long_vaf(data)
     if long.empty:
         print("    [!] pas de données VAF, figure ignorée")
         return
 
     palette = {"rdeer": config.COLORS["rdeer"], "vizome": config.COLORS["vizome"]}
-    order = [c for c in ("TP", "FP") if c in long["category"].unique()]
+    order = [c for c in ("TP", "FP", "FN") if c in long["category"].unique()]
+    hue_order = ["rdeer", "vizome"]
 
-    fig, ax = plt.subplots(figsize=(7, 6))
+    fig, ax = plt.subplots(figsize=(8, 6))
     sns.boxplot(data=long, x="category", y="VAF", hue="tool", order=order,
-                palette=palette, ax=ax, fliersize=2)
+                hue_order=hue_order, palette=palette, ax=ax, fliersize=2)
     ax.set_xlabel("")
     ax.set_ylabel("VAF (%)")
-    ax.set_title(f"{label} — Boxplot VAF (TP & FP)")
+    ax.set_title(f"{label} — Boxplot VAF (TP, FP : rdeer ; FN : vizome)")
     ax.legend(title="outil")
     _save(fig, out_dir, "fig3_box_vaf.png")
 
-    fig, ax = plt.subplots(figsize=(7, 6))
+    fig, ax = plt.subplots(figsize=(8, 6))
     sns.violinplot(data=long, x="category", y="VAF", hue="tool", order=order,
-                   palette=palette, ax=ax, cut=0, inner="box", split=False)
+                   hue_order=hue_order, palette=palette, ax=ax, cut=0,
+                   inner="box", split=False)
     ax.set_xlabel("")
     ax.set_ylabel("VAF (%)")
-    ax.set_title(f"{label} — Violin VAF (TP & FP)")
+    ax.set_title(f"{label} — Violin VAF (TP, FP : rdeer ; FN : vizome)")
     ax.legend(title="outil")
     _save(fig, out_dir, "fig3_violin_vaf.png")
 
