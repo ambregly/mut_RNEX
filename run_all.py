@@ -72,7 +72,7 @@ def main():
     if data_ex and data_rna:
         print("\n=== Figures comparaison EX vs RNA ===")
         try:
-            cmp.run_comparison(data_ex, data_rna, out / "comparison")
+            cmp.run_comparison(data_ex, data_rna, out / "comparaison")
         except Exception:
             print("[ERREUR] figures comparaison :")
             traceback.print_exc()
@@ -86,7 +86,7 @@ def main():
         reports[label] = dl.load_vaf_report(base, folder_name)
     if any(r is not None for r in reports.values()):
         try:
-            cmp.fig9_f1_histogram(reports, out / "comparison")
+            cmp.fig9_f1_histogram(reports, out / "comparaison")
         except Exception:
             print("[ERREUR] figure F1 :")
             traceback.print_exc()

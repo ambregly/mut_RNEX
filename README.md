@@ -41,7 +41,7 @@ En-tête : `gene  mutation  sample  rdeer_AF  rdeer_VAF  vizome_AF  vizome_VAF`
    `fig4c_driver_corplot` — corplot (style R corrplot) : matrice gène × gène des corrélations de VAF (triangle sup. = rdeer, triangle inf. = vizome), cercle taille & couleur = r, échelle −1..1.
    `fig4b_driver_heatmap` — variants drivers × samples, couleur TP / FP / FN.
 
-**Comparaison EX vs RNA** (`figures/comparison/`) :
+**Comparaison EX vs RNA** (`figures/comparaison/`) :
 
 5. `fig5_venn3_gene_mutation_sample` — Venn EX / RNA / vizome (paires variant/sample).
 6. `fig6_venn3_gene_mutation` — Venn EX / RNA / vizome (variants uniques, sans sample).
