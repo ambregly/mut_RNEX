@@ -196,7 +196,8 @@ def fig3_box_violin(data, out_dir, label: str) -> None:
     ax.set_xlabel("")
     ax.set_ylabel("VAF (%)")
     ax.set_title(f"{label} — Boxplot VAF (TP, FP : rdeer ; FN : vizome)")
-    ax.legend(title="outil")
+    ax.legend(title="outil", loc="upper left", bbox_to_anchor=(1.02, 1),
+              borderaxespad=0, frameon=False)
     _save(fig, out_dir, "fig3_box_vaf.png")
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -206,7 +207,8 @@ def fig3_box_violin(data, out_dir, label: str) -> None:
     ax.set_xlabel("")
     ax.set_ylabel("VAF (%)")
     ax.set_title(f"{label} — Violin VAF (TP, FP : rdeer ; FN : vizome)")
-    ax.legend(title="outil")
+    ax.legend(title="outil", loc="upper left", bbox_to_anchor=(1.02, 1),
+              borderaxespad=0, frameon=False)
     _save(fig, out_dir, "fig3_violin_vaf.png")
 
 
